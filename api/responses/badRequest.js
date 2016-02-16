@@ -4,7 +4,6 @@
     var req = this.req,
         res = this.res;
 
-
     return res.status(400).json(data);
   }
 
