@@ -1,7 +1,11 @@
 process.chdir(__dirname);
 
+var dotenv = require("dotenv");
+
 (function() {
   var sails;
+
+  dotenv.load();
 
   try {
     sails = require('sails');

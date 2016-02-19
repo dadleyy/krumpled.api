@@ -1,9 +1,29 @@
-(function() {
+module.exports.routes = (function() {
 
   var routes = {
-    "get /system": "SystemController.info"
+    "GET /system": "SystemController.info",
+
+    "get /session": "SessionController.current",
+    "POST /session": "SessionController.create",
+    "DELETE /session": "SessionController.destroy",
+    "GET /logout": "SessionController.destroy",
+
+    "GET /users": "UserController.find",
+    "POST /users": "UserController.create",
+    "PUT /users/:id": "UserController.update",
+    "DELETE /users/:id": "UserController.destroy",
+
+    "GET /portfolios": "PortfolioController.find",
+    "POST /portfolios": "PortfolioController.create",
+    "PUT /portfolios/:id": "PortfolioController.update",
+    "DELETE /portfolios/:id": "PortfolioController.destroy",
+
+    "GET /trades": "TradeController.find",
+    "POST /trades": "TradeController.create",
+    "PUT /trades/:id": "TradeController.update",
+    "DELETE /trades/:id": "TradeController.destroy"
   };
 
-  module.exports.routes = routes;
+  return routes;
 
 })();

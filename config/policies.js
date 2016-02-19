@@ -1,9 +1,16 @@
-(function() {
+module.exports.policies = (function() {
 
   var config = {
-    "*": true
+    "*": ["session"],
+    "SessionController": {
+      "create": [],
+      "destroy": []
+    },
+    "UserController": {
+      "create": []
+    }
   };
 
-  module.exports.policies = config;
+  return config;
 
 })();
