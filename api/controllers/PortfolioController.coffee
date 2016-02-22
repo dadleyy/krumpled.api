@@ -10,6 +10,7 @@ module.exports = do ->
 
     found = (err, user) ->
       return res.serverError err if err
+      return res.notFound 1 if not user
       portfolios = user.portfolios or []
       res.ok portfolios
 
@@ -27,7 +28,6 @@ module.exports = do ->
     mapped = (err, new_mapping) ->
       return res.modelError err if err
       res.ok created_portfolio
-
 
     created = (err, portfolio) ->
       return res.modelError err if err
