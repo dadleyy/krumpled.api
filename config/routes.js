@@ -14,6 +14,7 @@ module.exports.routes = (function() {
     "DELETE /users/:id": "UserController.destroy",
 
     "GET /portfolios": "PortfolioController.find",
+    "GET /portfolios/:id": "PortfolioController.findOne",
     "POST /portfolios": "PortfolioController.create",
     "PUT /portfolios/:id": "PortfolioController.update",
     "DELETE /portfolios/:id": "PortfolioController.destroy",

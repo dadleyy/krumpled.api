@@ -23,7 +23,10 @@ module.exports = do ->
     ((User.findOne {id: user}).populate "portfolios").exec foundUser
 
   TradeController.create = (req, res) ->
-    [cost, fee, symbol, shares, portfolio] = (unpack req.body) ["cost", "fee", "symbol", "shares", "portfolio"]
+    [price_per_share, fee, symbol, shares, portfolio] = (unpack req.body) [
+      "price_per_share", "fee", "symbol", "shares", "portfolio"
+    ]
+
     user = req.session.user
 
     if not portfolio
@@ -40,7 +43,7 @@ module.exports = do ->
       return res.notFound 2 if not exists
 
       Trade.create {
-        cost: cost
+        price_per_share: price_per_share
         shares: shares
         symbol: symbol
         portfolio: portfolio.id

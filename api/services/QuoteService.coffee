@@ -103,7 +103,7 @@ module.exports = do ->
         symbol: upper symbol
         exchange: exchange.id
       }, {
-        symbol: symbol
+        symbol: upper symbol
         full_name: quote_result.name
         exchange: exchange.id
       }, foundSymbol

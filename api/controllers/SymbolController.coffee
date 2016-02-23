@@ -5,7 +5,11 @@ module.exports = do ->
   upper = (str) -> str.toUpperCase?()
 
   SymbolController.find = (req, res) ->
-    res.noContent()
+    loaded = (err, all) ->
+      return res.badRequest 2 if err
+      res.ok all
+
+    Symbol.find().exec loaded
 
   SymbolController.findOne = (req, res) ->
     symbol_id = req.params.id

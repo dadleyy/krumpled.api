@@ -5,8 +5,8 @@ exports.up = function(knex, Promise) {
     table.increments();
     table.decimal("cost");
     table.decimal("shares");
-    table.integer("symbol");
-    table.integer("portfolio");
+    table.integer("symbol").unsigned().references("symbol.id");
+    table.integer("portfolio").unsigned().references("portfolio.id");
     table.decimal("fee");
     table.timestamps();
   });

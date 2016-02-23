@@ -3,20 +3,22 @@ ModelFactory = require "../lib/ModelFactory"
 module.exports = do ->
 
   Trade = ModelFactory {
-    "cost":
+    "price_per_share":
       "type": "decimal"
       "required": true
     "shares":
       "type": "decimal"
       "required": true
     "symbol":
-      "type": "integer"
+      "model": "Symbol"
       "required": true
     "portfolio":
-      "model": "portfolio"
+      "model": "Portfolio"
       "required": true
     "fee":
       "type": "decimal"
+    "date_sold":
+      "type": "date"
   }
 
   Trade
