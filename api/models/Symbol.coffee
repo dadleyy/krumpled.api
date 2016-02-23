@@ -6,9 +6,11 @@ module.exports = do ->
     "full_name":
       "type": "string"
       "required": true
-    "sybol":
+    "symbol":
       "type": "string"
       "required": true
+    "exchange":
+      "model": "Exchange"
   }
 
   Symbol

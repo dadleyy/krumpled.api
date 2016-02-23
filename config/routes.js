@@ -24,9 +24,12 @@ module.exports.routes = (function() {
     "DELETE /trades/:id": "TradeController.destroy",
 
     "GET /symbols": "SymbolController.find",
+    "GET /symbols/:id": "SymbolController.findOne",
     "POST /symbols": "SymbolController.create",
     "PUT /symbols/:id": "SymbolController.update",
-    "DELETE /symbols/:id": "SymbolController.destroy"
+    "DELETE /symbols/:id": "SymbolController.destroy",
+
+    "GET /quotes": "QuoteController.find"
   };
 
   return routes;

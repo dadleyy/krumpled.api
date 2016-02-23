@@ -11,7 +11,12 @@ module.exports = do ->
 
   QUOTE_API_HOST = "iphone-wu.apple.com"
   QUOTE_API_PORT = 80
-  QUOTE_API_PATH = "/dgw?imei=4087475939882607228&apptype=finance"
+  QUOTE_API_PATH = process.env["QUOTE_API_PATH"]
+  QUOTE_API_CLIENT_ID = process.env["QUOTE_API_CLIENT_ID"]
+  QUOTE_API_USER_AGENT = process.env["QUOTE_API_USER_AGENT"]
+
+  lower = (s) -> s.toLowerCase?()
+  upper = (s) -> s.toUpperCase?()
 
   DATA_PARTS = [
     "name", "symbol", "price"
@@ -73,11 +78,12 @@ module.exports = do ->
     deferred = new bluebird (fns...) -> [resolve, reject] = fns
     response = ""
     request_body = requestBody symbol
+    quote_result = null
 
     headers =
       "Content-Type": "text/xml"
-      "X-Client-ID": "IMSI=5115998181642601044"
-      "User-Agent": "Apple iPhone v6.1.2 Stocks v3.0.10B146"
+      "X-Client-ID": QUOTE_API_CLIENT_ID
+      "User-Agent": QUOTE_API_USER_AGENT
 
     request_config =
       host: QUOTE_API_HOST
@@ -86,13 +92,33 @@ module.exports = do ->
       method: "POST"
       headers: headers
 
-    finish = ->
-      info = parseResponse response
+    foundSymbol = (err, found_symbol) ->
+      return reject new Error 17 if err
+      resolve quote_result
 
-      if not info
+    foundExchange = (err, exchange) ->
+      return reject new Error 18 if err
+
+      Symbol.findOrCreate {
+        symbol: upper symbol
+        exchange: exchange.id
+      }, {
+        symbol: symbol
+        full_name: quote_result.name
+        exchange: exchange.id
+      }, foundSymbol
+
+    finish = ->
+      quote_result = parseResponse response
+
+      unless quote_result
         return reject new Error 13
 
-      resolve info
+      Exchange.findOrCreate {
+        name: lower quote_result.exchange
+      }, {
+        name: lower quote_result.exchange
+      }, foundExchange
 
     receive = (data) ->
       response += data

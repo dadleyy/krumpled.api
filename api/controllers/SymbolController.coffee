@@ -1,20 +1,21 @@
 module.exports = do ->
 
-
   SymbolController = {}
 
+  upper = (str) -> str.toUpperCase?()
+
   SymbolController.find = (req, res) ->
-    symbol = req.query.s or req.query.symbol
+    res.noContent()
 
-    found = (data) ->
-      res.ok data
+  SymbolController.findOne = (req, res) ->
+    symbol_id = req.params.id
 
-    missing = (data) ->
-      res.notFound data
+    found = (err, symbol) ->
+      return res.notFound 1 if err
+      return res.notFound 2 unless symbol
+      res.ok symbol
 
-    QuoteService.lookup symbol
-      .then found
-      .catch missing
+    Symbol.findOne {id: symbol_id}, found
 
   SymbolController.create = (req, res) ->
     res.noContent()
