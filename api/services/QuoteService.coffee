@@ -96,7 +96,7 @@ module.exports = do ->
 
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>#{xml body}"
 
-  QuoteService.lookup = (symbol, callback) ->
+  QuoteService.lookup = (symbol, callback, save_results=false) ->
     [resolve, reject] = [null, null]
     deferred = new bluebird (fns...) -> [resolve, reject] = fns
     response = ""
@@ -115,11 +115,29 @@ module.exports = do ->
       method: "POST"
       headers: headers
 
-    finishedAll = (symbols) ->
-      for q in quote_result
-        q.id = (s for s in symbols when s.symbol == q.symbol)[0]?.id or false
-
+    finishedAll = (histories) ->
       resolve quote_result
+
+    createHistory = (symbols) ->
+      history_load = null
+      timestamp = new Date()
+
+      createHistory = (quote) ->
+        quote.id = (s for s in symbols when s.symbol == q.symbol)[0]?.id or false
+
+        history_data =
+          symbol: q.id
+          volume: q.volume
+          price: q.price
+          date: timestamp
+
+        if save_results then SymbolPriceHistory.create history_data else bluebird.resolve true
+
+      history_load = (createHistory q for q in quote_result)
+      
+      bluebird.all history_load
+        .then finishedAll
+        .catch failedSymbols
 
     failedSymbols = (e) ->
       reject new Error 17
@@ -143,7 +161,7 @@ module.exports = do ->
         symbol_lookups.push lookup
 
       bluebird.all symbol_lookups
-        .then finishedAll
+        .then createHistory
         .catch failedSymbols
 
     failedExchanges = ->

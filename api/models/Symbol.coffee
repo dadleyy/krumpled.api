@@ -11,6 +11,9 @@ module.exports = do ->
       "required": true
     "exchange":
       "model": "Exchange"
+    "price_history":
+      "collection": "SymbolPriceHistory"
+      "via": "symbol"
   }
 
   Symbol

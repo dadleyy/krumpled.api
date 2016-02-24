@@ -1,3 +1,5 @@
+waterline = require "waterline"
+
 module.exports = do ->
 
   copyable_definition_properties = [
@@ -32,6 +34,5 @@ module.exports = do ->
       as_obj
 
     Model
-
 
   ModelFactory

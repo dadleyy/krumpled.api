@@ -30,7 +30,9 @@ module.exports.routes = (function() {
     "PUT /symbols/:id": "SymbolController.update",
     "DELETE /symbols/:id": "SymbolController.destroy",
 
-    "GET /quotes": "QuoteController.find"
+    "GET /quotes": "QuoteController.find",
+
+    "GET /symbolpricehistory": "SymbolPriceHistoryController.find"
   };
 
   return routes;
