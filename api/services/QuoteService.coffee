@@ -45,7 +45,7 @@ module.exports = do ->
 
       data =
         price: text_extract "price"
-        volume: text_extract "volumne"
+        volume: text_extract "volume"
         symbol: text_extract "symbol"
         name: text_extract "name"
         exchange: text_extract "exchange"
@@ -140,7 +140,7 @@ module.exports = do ->
         .catch failedSymbols
 
     failedSymbols = (e) ->
-      reject new Error 17
+      reject new Error "symbol_lookup"
 
     loadedExchanges = (results) ->
       symbol_lookups = []
@@ -165,13 +165,13 @@ module.exports = do ->
         .catch failedSymbols
 
     failedExchanges = ->
-      reject new Error 12
+      reject new Error "exhange_lookup"
 
     finish = ->
       quote_result = parseResponse response
 
       unless quote_result
-        return reject new Error 13
+        return reject new Error "quote_api_response"
 
       exchanges = (q.exchange for q in quote_result)
       exchange_lookups = ((Exchange.findOrCreate {name: e}, {name: e}) for e in exchanges)
@@ -184,10 +184,10 @@ module.exports = do ->
       response += data
 
     errored = ->
-      reject new Error 12
+      reject new Error "quote_api_socket"
 
     connected = (response) ->
-      return reject new Error 11 if response.statusCode != 200
+      return reject new Error "quote_api_status_code" if response.statusCode != 200
       response.on "data", receive
       response.on "end", finish
 
@@ -199,7 +199,7 @@ module.exports = do ->
       request.end()
       request.on "error", errored
     catch e
-      reject new Error 10
+      reject new Error "quote_api_connect"
 
     deferred
 
