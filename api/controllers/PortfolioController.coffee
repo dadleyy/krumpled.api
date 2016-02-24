@@ -27,24 +27,19 @@ module.exports = do ->
       found_folio.net = value_info.net
       res.ok found_folio
 
-    failed = ->
+    failed = (err) ->
       res.badRequest 3
 
-    found = (err, portfolio) ->
-      return res.badRequest 1 if err
-      return res.badRequest 2 unless portfolio and portfolio.users
-      exists = (u for u in portfolio.users when u.id == req.session.user).length > 0
-      portfolio = portfolio.toObject()
-      delete portfolio.users
+    loadedPortfolio = (portfolio) ->
       found_folio = portfolio
 
       PortfolioValue.calculate portfolio.id
         .then finish
         .catch failed
 
-    Portfolio.findOne {id: id}
-      .populate "users"
-      .exec found
+    UserPortfolios.validate req.session.user, id
+      .then loadedPortfolio
+      .catch failed
 
   PortfolioController.create = (req, res) ->
     name = req.body?.name

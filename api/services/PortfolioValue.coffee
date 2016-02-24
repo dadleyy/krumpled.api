@@ -27,16 +27,16 @@ module.exports = do ->
       resolve {value: value, net: net_value}
 
     failedQuotes = ->
-      reject 422
+      reject new Error 422
 
     loadedSymbols = (err, loaded_symbols) ->
       return reject new Error err if err
       return reject new Error 404 if not loadedSymbols
 
       symbols = loaded_symbols
+      symbol_list = (s.symbol for s in symbols)
 
-      promises = (QuoteService.lookup s.symbol for s in symbols)
-      bluebird.all promises
+      QuoteService.lookup symbol_list
         .then loadedQuotes
         .catch failedQuotes
 

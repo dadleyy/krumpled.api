@@ -2,6 +2,8 @@ module.exports = do ->
 
   TradeController = {}
 
+  upper = (s) -> s?.toUpperCase?()
+
   unpack = (obj) ->
     handler = (keys) ->
       (obj[k] for k in keys)
@@ -32,9 +34,28 @@ module.exports = do ->
     if not portfolio
       return res.badRequest {fields: "portfolio_missing"}
 
-    created = (err, new_trade) ->
-      return res.modelError err if err
+    trade_data =
+      price_per_share: price_per_share
+      shares: shares
+      symbol: symbol
+      fee: fee
+
+    created = (new_trade) ->
       res.ok new_trade
+
+    failedCreate = (err) ->
+      sails.log err
+      res.modelError err
+
+    foundSymbol = (results) ->
+      trade_data.symbol = results[0].id
+
+      Trade.create trade_data
+        .then created
+        .catch failedCreate
+
+    missingSymbol = ->
+      res.badRequest "missing symbol"
 
     foundPortfolio = (err, portfolio) ->
       return res.serverError() if err
@@ -42,13 +63,18 @@ module.exports = do ->
       exists = (u for u in portfolio.users or [] when u.id == user).length >= 1
       return res.notFound 2 if not exists
 
-      Trade.create {
-        price_per_share: price_per_share
-        shares: shares
-        symbol: symbol
-        portfolio: portfolio.id
-        fee: fee
-      }, created
+      trade_data.portfolio = portfolio.id
+
+      if typeof symbol == "string"
+        QuoteService.lookup upper symbol
+          .then foundSymbol
+          .catch missingSymbol
+
+        return true
+
+      Trade.create trade_data
+        .then created
+        .catch failedCreate
 
     ((Portfolio.findOne {id: portfolio}).populate "users").exec foundPortfolio
 

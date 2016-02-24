@@ -116,6 +116,9 @@ module.exports = do ->
       headers: headers
 
     finishedAll = (symbols) ->
+      for q in quote_result
+        q.id = (s for s in symbols when s.symbol == q.symbol)[0]?.id or false
+
       resolve quote_result
 
     failedSymbols = (e) ->
