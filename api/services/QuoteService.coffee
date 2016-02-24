@@ -15,8 +15,8 @@ module.exports = do ->
   QUOTE_API_CLIENT_ID = process.env["QUOTE_API_CLIENT_ID"]
   QUOTE_API_USER_AGENT = process.env["QUOTE_API_USER_AGENT"]
 
-  lower = (s) -> s.toLowerCase?()
-  upper = (s) -> s.toUpperCase?()
+  lower = (s) -> s?.toLowerCase?()
+  upper = (s) -> s?.toUpperCase?()
 
   DATA_PARTS = [
     "name", "symbol", "price"
@@ -28,21 +28,42 @@ module.exports = do ->
     "yearrange", "exchange"
   ]
 
+  extractor = (node) ->
+    extract = (child_tag) ->
+      child_node = (node.getElementsByTagName child_tag).item 0
+      child_node?.textContent
+    extract
+
   parseResponse = (response_text) ->
     dom = new xmldom.DOMParser().parseFromString response_text
+    quotes = dom.getElementsByTagName "quote"
 
-    quote_info =
-      price: (xpath.select "//quote//price/text()", dom).toString()
-      name: (xpath.select "//quote//name/text()", dom).toString()
-      symbol: (xpath.select "//quote//symbol/text()", dom).toString()
-      exchange: (xpath.select "//quote//exchange/text()", dom).toString()
-      volume: (xpath.select "//quote//volume/text()", dom).toString()
+    quote_info = []
+ 
+    extract = (quote) ->
+      text_extract = extractor quote
 
-    quote_info
+      data =
+        price: text_extract "price"
+        volume: text_extract "volumne"
+        symbol: text_extract "symbol"
+        name: text_extract "name"
+        exchange: text_extract "exchange"
+        change: text_extract "change"
+        dividendyield: text_extract "dividendyield"
+
+      if data.price then data else false
+
+    for q in quotes
+      q_data = extract q
+      quote_info.push q_data if q_data
+
+    if quote_info.length > 0 then quote_info else false
 
 
   requestBody = (symbol) ->
     body = {}
+    symbol = if symbol instanceof Array then symbol else [symbol]
 
     request_attrs =
       _attr:
@@ -59,10 +80,12 @@ module.exports = do ->
         id: 0
         type: "getquotes"
 
+    symbol_list = ({symbol: s} for s in symbol)
+
     query =
       query: [
         query_attrs
-        {list: [{symbol: "#{symbol}".toUpperCase()}]}
+        {list: symbol_list}
         {parts: DATA_PARTS.join ","}
       ]
 
@@ -92,21 +115,36 @@ module.exports = do ->
       method: "POST"
       headers: headers
 
-    foundSymbol = (err, found_symbol) ->
-      return reject new Error 17 if err
+    finishedAll = (symbols) ->
       resolve quote_result
 
-    foundExchange = (err, exchange) ->
-      return reject new Error 18 if err
+    failedSymbols = (e) ->
+      reject new Error 17
 
-      Symbol.findOrCreate {
-        symbol: upper symbol
-        exchange: exchange.id
-      }, {
-        symbol: upper symbol
-        full_name: quote_result.name
-        exchange: exchange.id
-      }, foundSymbol
+    loadedExchanges = (results) ->
+      symbol_lookups = []
+
+      for q in quote_result
+        exchange = (e for e in results when (upper e.name) == (upper q.exchange))[0]
+        continue if not exchange
+
+        lookup = Symbol.findOrCreate {
+          symbol: upper q.symbol
+          exchange: exchange.id
+        }, {
+          symbol: upper q.symbol
+          exchange: exchange.id
+          full_name: q.name
+        }
+
+        symbol_lookups.push lookup
+
+      bluebird.all symbol_lookups
+        .then finishedAll
+        .catch failedSymbols
+
+    failedExchanges = ->
+      reject new Error 12
 
     finish = ->
       quote_result = parseResponse response
@@ -114,11 +152,12 @@ module.exports = do ->
       unless quote_result
         return reject new Error 13
 
-      Exchange.findOrCreate {
-        name: lower quote_result.exchange
-      }, {
-        name: lower quote_result.exchange
-      }, foundExchange
+      exchanges = (q.exchange for q in quote_result)
+      exchange_lookups = ((Exchange.findOrCreate {name: e}, {name: e}) for e in exchanges)
+
+      bluebird.all exchange_lookups
+        .then loadedExchanges
+        .catch failedExchanges
 
     receive = (data) ->
       response += data

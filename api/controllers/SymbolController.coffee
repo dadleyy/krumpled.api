@@ -1,15 +1,45 @@
+bluebird = require "bluebird"
+
 module.exports = do ->
 
   SymbolController = {}
 
   upper = (str) -> str.toUpperCase?()
 
-  SymbolController.find = (req, res) ->
-    loaded = (err, all) ->
-      return res.badRequest 2 if err
-      res.ok all
+  sanitize = (str) ->
+    "#{str}".replace /([^A-z0-9])/g, ""
 
-    Symbol.find().exec loaded
+  SymbolController.find = (req, res) ->
+    [page, limit] = [(req.query.page or 0), (req.query.limit or 10)]
+
+    unless page >= 1
+      page = 0
+
+    unless limit >= 1 and limit < 100
+      limit = 10
+
+    loaded = (results) ->
+      [symbols, total] = results
+      res.ok symbols, {total: total}
+
+    failed = (err) ->
+      res.badRequest err
+
+    cursor = Symbol.find()
+
+    if req.query.symbol
+      req.query.symbol.like = "%#{sanitize req.query.symbol.like}%" if req.query.symbol.like
+      cursor.where {symbol: req.query.symbol}
+
+    cursor.paginate
+      page: page
+      limit: limit
+
+    (bluebird.all [
+      cursor
+      Symbol.count()
+    ]).then loaded
+      .catch failed
 
   SymbolController.findOne = (req, res) ->
     symbol_id = req.params.id
