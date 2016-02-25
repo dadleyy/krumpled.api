@@ -174,7 +174,7 @@ module.exports = do ->
         return reject new Error "quote_api_response"
 
       exchanges = (q.exchange for q in quote_result)
-      exchange_lookups = ((Exchange.findOrCreate {name: e}, {name: e}) for e in exchanges)
+      exchange_lookups = ((Exchange.findOrCreate {name: upper e}, {name: upper e}) for e in exchanges)
 
       bluebird.all exchange_lookups
         .then loadedExchanges
