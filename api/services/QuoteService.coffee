@@ -34,6 +34,10 @@ module.exports = do ->
       child_node?.textContent
     extract
 
+  cleanExchangeName = (name) ->
+    chars_only = name.replace /[^A-Za-z]/g, ""
+    upper chars_only
+
   parseResponse = (response_text) ->
     dom = new xmldom.DOMParser().parseFromString response_text
     quotes = dom.getElementsByTagName "quote"
@@ -169,12 +173,20 @@ module.exports = do ->
 
     finish = ->
       quote_result = parseResponse response
+      exchanges = []
 
       unless quote_result
         return reject new Error "quote_api_response"
 
-      exchanges = (q.exchange for q in quote_result)
-      exchange_lookups = ((Exchange.findOrCreate {name: upper e}, {name: upper e}) for e in exchanges)
+      for q in quote_result
+        exchange_name = cleanExchangeName q.exchange
+        exchanges.push exchange_name if (exchanges.indexOf exchange_name) == -1
+
+      exchange_lookups = []
+
+      for e in exchanges
+        lookup = Exchange.findOrCreate {name: e}, {name: e}
+        exchange_lookups.push lookup
 
       bluebird.all exchange_lookups
         .then loadedExchanges
